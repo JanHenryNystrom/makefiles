@@ -40,6 +40,7 @@ test: build
 ifeq ("$(wildcard $(TEST_CONFIG))","")
 	@$(REBAR) -jk eunit skip_deps=true
 else
+	@$(REBAR) -jk -C $(TEST_CONFIG) get-deps
 	@$(REBAR) -jk -C $(TEST_CONFIG) eunit skip_deps=true
 endif
 
