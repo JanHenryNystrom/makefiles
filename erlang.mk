@@ -1,5 +1,5 @@
 #==============================================================================
-# Copyright 2013 Jan Henry Nystrom <JanHenryNystrom@gmail.com>
+# Copyright 2013-2015 Jan Henry Nystrom <JanHenryNystrom@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 #==============================================================================
 
 REBAR="./rebar"
+TEST_CONFIG=rebar.test.config
 .PHONY: default build xref compile test doc clean dist-clean real-clean \
         get-deps update-deps
 
@@ -36,7 +37,11 @@ xref: compile
 
 test: build
 	@rm -rf .eunit
+ifeq ("$(wildcard $(TEST_CONFIG))","")
 	@$(REBAR) -jk eunit skip_deps=true
+else
+	@$(REBAR) -jk -C $(TEST_CONFIG) eunit skip_deps=true
+endif
 
 doc: rebar
 	@$(REBAR) -j doc skip_deps=true
