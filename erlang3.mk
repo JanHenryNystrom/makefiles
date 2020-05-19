@@ -1,5 +1,5 @@
 #==============================================================================
-# Copyright 2013-2020 Jan Henry Nystrom <JanHenryNystrom@gmail.com>
+# Copyright 2020 Jan Henry Nystrom <JanHenryNystrom@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,57 +14,74 @@
 # limitations under the License.
 #==============================================================================
 
-REBAR="./rebar"
+REBAR3="./rebar3"
 TEST_CONFIG=rebar.test.config
 .PHONY: default build xref compile test doc clean dist-clean real-clean \
         get-deps update-deps
+.PHONY: rel shell
 
 default: build
 
 build: get-deps compile
 
-rebar:
+rebar3:
 	mkdir -p deps
-	(cd deps && git clone https://github.com/rebar/rebar)
-	(cd deps/rebar && ./bootstrap)
-	cp deps/rebar/rebar .
+	(cd deps && git clone https://github.com/erlang/rebar3.git)
+	(cd deps/rebar3 && ./bootstrap)
+	cp deps/rebar3/rebar3 .
 
-compile: rebar
-	@$(REBAR) -j compile
+shell: compile
+	${REBAR3} shell
+
+rel:	build
+	${REBAR3} release
+
+compile: rebar3
+	@$(REBAR3) compile
 
 xref: compile
-	@$(REBAR) -jk skip_deps=true xref
+	$(REBAR3) xref
 
 test: build
-	@rm -rf .eunit
+	rm -rf .eunit
 ifeq ("$(wildcard $(TEST_CONFIG))","")
-	@$(REBAR) -jk eunit skip_deps=true
+	$(REBAR3) eunit
 else
-	@$(REBAR) -jk -C $(TEST_CONFIG) get-deps
-	@$(REBAR) -jk -C $(TEST_CONFIG) eunit skip_deps=true
+	REBAR_CONFIG=$(TEST_CONFIG) $(REBAR3) get-deps
+	REBAR_CONFIG=$(TEST_CONFIG) $(REBAR3) do eunit,cover
 endif
 
-doc: rebar
-	@$(REBAR) -j doc skip_deps=true
+ct: build
+ifeq ("$(wildcard $(TEST_CONFIG))","")
+	$(REBAR3) ct
+else
+	REBAR_CONFIG=$(TEST_CONFIG) $(REBAR3) get-deps
+	REBAR_CONFIG=$(TEST_CONFIG) $(REBAR3) do ct,cover
+endif
 
-clean: rebar
-	@$(REBAR) -j clean
+doc: rebar3
+	$(REBAR3) doc skip_deps=true
+
+clean: rebar3
+	$(REBAR3) clean
 
 dist-clean: clean
-	@$(REBAR) -j delete-deps
+	$(REBAR3) clean -a
 
 real-clean: dist-clean
-	rm -f rebar
+	rm -f rebar3
+	rm -f rebar.lock
+	rm -fr build
 	rm -fr deps
 	rm -fr ebin
 
-get-deps: rebar
-	@$(REBAR) -j get-deps
+get-deps: rebar3
+	$(REBAR3) get-deps
 
-update-deps: rebar
-	@$(REBAR) -j update-deps
-	@$(REBAR) -j get-deps
+update-deps: rebar3
+	$(REBAR3) update-deps
+	$(REBAR3) get-deps
 
-update-rebar: rebar
-	(cd deps/rebar && git pull && ./bootstrap)
-	cp deps/rebar/rebar ${REBAR}
+update-rebar: rebar3
+	(cd deps/rebar3 && git pull && ./bootstrap)
+	cp deps/rebar3/rebar3 ${REBAR3}
