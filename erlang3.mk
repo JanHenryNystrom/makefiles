@@ -79,9 +79,9 @@ real-clean: dist-clean
 	rm -fr deps
 	rm -fr ebin
 
-get-deps: rebar3
+get-deps:
 	$(REBAR3) get-deps
 
-update-deps: rebar3
+update-deps:
 	$(REBAR3) update-deps
 	$(REBAR3) get-deps
