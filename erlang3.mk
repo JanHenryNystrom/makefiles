@@ -14,7 +14,16 @@
 # limitations under the License.
 #==============================================================================
 
-REBAR3="./rebar3"
+REBAR3 := $(shell which rebar3)
+
+ifeq (${REBAR3},)
+  DUMMY := $(shell mkdir -p deps)
+  DUMMY := $(shell cd deps && git clone https://github.com/erlang/rebar3.git)
+  DUMMY := $(shell cd deps/rebar3 && ./bootstrap)
+  DUMMY := $(shell ln -s deps/rebar3/rebar3)
+  REBAR3 := "./rebar3"
+endif
+
 TEST_CONFIG=rebar.test.config
 .PHONY: default build xref compile test doc clean dist-clean real-clean \
         get-deps update-deps
@@ -24,19 +33,13 @@ default: build
 
 build: get-deps compile
 
-rebar3:
-	mkdir -p deps
-	(cd deps && git clone https://github.com/erlang/rebar3.git)
-	(cd deps/rebar3 && ./bootstrap)
-	cp deps/rebar3/rebar3 .
-
 shell: compile
 	${REBAR3} shell
 
 rel:	build
 	${REBAR3} release
 
-compile: rebar3
+compile:
 	@$(REBAR3) compile
 
 xref: compile
@@ -59,10 +62,10 @@ else
 	REBAR_CONFIG=$(TEST_CONFIG) $(REBAR3) do ct,cover
 endif
 
-doc: rebar3
+doc:
 	$(REBAR3) doc skip_deps=true
 
-clean: rebar3
+clean:
 	$(REBAR3) clean
 
 dist-clean: clean
@@ -71,7 +74,8 @@ dist-clean: clean
 real-clean: dist-clean
 	rm -f rebar3
 	rm -f rebar.lock
-	rm -fr build
+	rm -fr .build
+	rm -fr _build
 	rm -fr deps
 	rm -fr ebin
 
@@ -81,7 +85,3 @@ get-deps: rebar3
 update-deps: rebar3
 	$(REBAR3) update-deps
 	$(REBAR3) get-deps
-
-update-rebar: rebar3
-	(cd deps/rebar3 && git pull && ./bootstrap)
-	cp deps/rebar3/rebar3 ${REBAR3}
