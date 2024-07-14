@@ -1,5 +1,5 @@
 #==============================================================================
-# Copyright 2020 Jan Henry Nystrom <JanHenryNystrom@gmail.com>
+# Copyright 2020-2024 Jan Henry Nystrom <JanHenryNystrom@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -45,8 +45,10 @@ compile:
 xref: compile
 	$(REBAR3) xref
 
+dialyzer: compile
+	$(REBAR3) dialyzer
+
 test: build
-	rm -rf .eunit
 ifeq ("$(wildcard $(TEST_CONFIG))","")
 	$(REBAR3) eunit
 else
@@ -63,7 +65,7 @@ else
 endif
 
 doc:
-	$(REBAR3) doc skip_deps=true
+	$(REBAR3) ex_doc
 
 clean:
 	$(REBAR3) clean
